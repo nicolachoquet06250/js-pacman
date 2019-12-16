@@ -1,5 +1,7 @@
 class Bonus {
-    _points = 1;
+    constructor() {
+        this._points = 1;
+    }
 
     set points(newPoints) {
         if(newPoints !== this._points) {

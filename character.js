@@ -1,8 +1,6 @@
 class Character extends Drawable {
-    pseudo = '';
-
-    constructor(context, pseudo) {
-        super(context);
+    constructor(pseudo) {
+        super();
         this.pseudo = pseudo;
     }
 }

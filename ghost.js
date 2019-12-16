@@ -1,5 +1,8 @@
 class Ghost extends multi.inherit(Malus, Character) {
-    points = 3;
+    constructor(context) {
+        super(context);
+        this.points = 3;
+    }
 
     draw() {
 

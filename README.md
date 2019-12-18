@@ -6,6 +6,7 @@
  
 ##CANVAS HTML 5 / JS
  - https://openclassrooms.com/fr/courses/1916641-dynamisez-vos-sites-web-avec-javascript/1922103-lelement-canvas
+ - https://developer.mozilla.org/fr/docs/Tutoriel_canvas/Formes_g%C3%A9om%C3%A9triques
  
 ##EXAMPLE
  - http://pacman.platzh1rsch.ch/

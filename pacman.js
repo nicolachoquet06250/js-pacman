@@ -43,8 +43,20 @@ class Pacman extends Character {
         function save_pacman(x, y, opened) {
             document.querySelector('#board').setAttribute('data-pacman', JSON.stringify({ position: { x, y }, opened }));
         }
+        function save_fantome(color, x, y) {
+            let fantomes = {};
+            if(document.querySelector('#board').getAttribute('data-fantomes') !== undefined
+                && document.querySelector('#board').getAttribute('data-fantomes') !== null) {
+                fantomes = JSON.parse(document.querySelector('#board').getAttribute('data-fantomes'));
+            }
+            fantomes[color] = { position: { x, y } };
+            document.querySelector('#board').setAttribute('data-fantomes', JSON.stringify(fantomes));
+        }
         function get_pacman_properties() {
             return JSON.parse(document.querySelector('#board').getAttribute('data-pacman'));
+        }
+        function get_fantome_properties(color = 'black') {
+            return JSON.parse(document.querySelector('#board').getAttribute('data-fantomes'))[color];
         }
         function clear_pacman(ctx, x, y, opened = true) {
             ctx.fillStyle = 'white';
@@ -56,6 +68,25 @@ class Pacman extends Character {
             ctx.arc(x, y - 6, 12.5, startAngle, endAngle, false);
             ctx.fill();
             ctx.restore();
+        }
+        function clear_fantome(ctx, x, y) {
+            function dessiner_contours(ctx) {
+                ctx.fillStyle = 'transparent';
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x, y - 14);
+                ctx.bezierCurveTo(x, y - 22, x + 6, y - 28, x + 4, y - 28);
+                ctx.bezierCurveTo(x + 22, y - 40, x + 28, y - 22, x + 28, y + 14);
+                ctx.lineTo(x + 28, y);
+                ctx.lineTo(x + 23.34, y - 4.67);
+                ctx.lineTo(x + 18.67, y);
+                ctx.lineTo(x + 14, y - 4.67);
+                ctx.lineTo(x + 9.33, y);
+                ctx.lineTo(x + 4.67, y - 4.67);
+                ctx.lineTo(x, y);
+                ctx.fill();
+            }
+            dessiner_contours(ctx);
         }
         function dessiner_pacman(ctx, x, y, sens, opened = true) {
             ctx.fillStyle = 'yellow';
@@ -123,8 +154,9 @@ class Pacman extends Character {
             dessiner_yeux(ctx);
             dessiner_yeux_cercle_noir(ctx, 'right');
             dessiner_yeux_cercle_noir(ctx, 'left');
+            save_fantome(color, x, y);
         }
-        function move(ctx, sens) {
+        function move_pacman(ctx, sens) {
             let pacman = get_pacman_properties();
             clear_pacman(ctx, pacman.position.x, pacman.position.y, pacman.opened);
             switch (sens) {
@@ -144,29 +176,49 @@ class Pacman extends Character {
                     break;
             }
         }
+        function move_fantome(ctx, color, sens) {
+            let fantome = get_fantome_properties(color);
+            clear_fantome(ctx, fantome.position.x, fantome.position.y);
+            switch (sens) {
+                case 'left':
+                    dessiner_fantome(ctx, fantome.position.x - 10, fantome.position.y, color);
+                    break;
+                case 'right':
+                    dessiner_fantome(ctx, fantome.position.x + 10, fantome.position.y, color);
+                    break;
+                case 'top':
+                    dessiner_fantome(ctx, fantome.position.x, fantome.position.y - 10, color);
+                    break;
+                case 'bottom':
+                    dessiner_fantome(ctx, fantome.position.x, fantome.position.y + 10, color);
+                    break;
+                default:
+                    break;
+            }
+        }
         function init_events(ctx) {
             document.addEventListener('keydown', e => {
                 switch (e.keyCode) {
                     case KEY.LEFT:
-                        move(ctx, 'left');
+                        move_pacman(ctx, 'left');
                         break;
                     case KEY.RIGHT:
-                        move(ctx, 'right');
+                        move_pacman(ctx, 'right');
                         break;
                     case KEY.DOWN:
-                        move(ctx, 'bottom');
+                        move_pacman(ctx, 'bottom');
                         break;
                     case KEY.UP:
-                        move(ctx, 'top');
+                        move_pacman(ctx, 'top');
                         break;
                     default:
                         break;
                 }
             });
-            document.querySelector('.go-top').addEventListener('click', () => move(ctx, 'top'));
-            document.querySelector('.go-bottom').addEventListener('click', () => move(ctx, 'bottom'));
-            document.querySelector('.go-left').addEventListener('click', () => move(ctx, 'left'));
-            document.querySelector('.go-right').addEventListener('click', () => move(ctx, 'right'));
+            document.querySelector('.go-top').addEventListener('click', () => move_pacman(ctx, 'top'));
+            document.querySelector('.go-bottom').addEventListener('click', () => move_pacman(ctx, 'bottom'));
+            document.querySelector('.go-left').addEventListener('click', () => move_pacman(ctx, 'left'));
+            document.querySelector('.go-right').addEventListener('click', () => move_pacman(ctx, 'right'));
         }
         function dessiner() {
             let canvas = document.querySelector('#board');
@@ -197,6 +249,11 @@ class Pacman extends Character {
                 dessiner_fantome(ctx, 83, 110, 'black');
                 dessiner_fantome(ctx, 215, 110, 'purple');
                 dessiner_fantome(ctx, 215, 36, 'yellow');
+
+                move_fantome(ctx, 'red', 'bottom');
+                move_fantome(ctx, 'red', 'bottom');
+                move_fantome(ctx, 'red', 'right');
+                move_fantome(ctx, 'red', 'bottom');
 
                 init_events(ctx);
             }

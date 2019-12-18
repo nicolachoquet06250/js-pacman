@@ -6,3 +6,6 @@
  
 ##CANVAS HTML 5 / JS
  - https://openclassrooms.com/fr/courses/1916641-dynamisez-vos-sites-web-avec-javascript/1922103-lelement-canvas
+ 
+##EXAMPLE
+ - http://pacman.platzh1rsch.ch/

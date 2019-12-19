@@ -24,6 +24,42 @@ class Pacman extends Character {
     }
 
     draw() {
+        let ghostSetIntervals = {
+            red: null,
+            blue: null,
+            yellow: null,
+            pink: null
+        };
+        let events = {
+            onPacmanCollision(pacman, ghost) {
+                console.log('onPacmanCollision', pacman, ghost);
+            },
+            onGhostCollision(pacman, ghost) {
+                clearInterval(ghostSetIntervals[ghost["data-color"]]);
+                let ghost_o = document.querySelector(`.ghost[data-position_x="${ghost['data-position_x']}"][data-position_y="${ghost['data-position_y']}"]`);
+                setTimeout(function () {
+                    ghost_o.classList.add('dead');
+                }, 0);
+                setTimeout(function () {
+                    ghost_o.classList.remove('dead');
+                }, 500);
+                setTimeout(function () {
+                    ghost_o.classList.add('dead');
+                }, 1000);
+                setTimeout(function () {
+                    ghost_o.classList.remove('dead');
+                }, 1500);
+                setTimeout(function () {
+                    ghost_o.classList.add('dead');
+                }, 2000);
+                setTimeout(function () {
+                    ghost_o.classList.remove('ghost');
+                    ghost_o.removeAttribute('data-color');
+                    ghost_o.classList.remove('dead');
+                }, 2000);
+            }
+        };
+
         function get_position(element) {
             return {
                 x: parseInt(element.getAttribute('data-position_x')),
@@ -34,20 +70,31 @@ class Pacman extends Character {
             function move(current, next, direction) {
                 let opened = current.getAttribute('data-opened') === "true";
                 current.classList.remove('direction-left', 'direction-right', 'direction-top', 'direction-bottom');
-                if(next && !next.classList.contains('wall')) {
-                    current.removeAttribute('data-opened');
-                    current.classList.remove('pacman');
-                    if(next.classList.contains('food')) {
-                        next.classList.remove('food');
+                if(next) {
+                    if (next.classList.contains('ghost')) {
+                        events.onGhostCollision({
+                            "data-position_x": parseInt(current.getAttribute('data-position_x')),
+                            "data-position_y": parseInt(current.getAttribute('data-position_y')),
+                            "data-opened": current.getAttribute('data-opened') === "true",
+                        }, {
+                            "data-position_x": parseInt(next.getAttribute('data-position_x')),
+                            "data-position_y": parseInt(next.getAttribute('data-position_y')),
+                            "data-color": next.getAttribute('data-color'),
+                        });
                     }
-                    if(next.classList.contains('ghost')) {
-                        next.classList.remove('ghost');
+                    if(!next.classList.contains('wall') && !next.classList.contains('ghost')) {
+                        current.removeAttribute('data-opened');
+                        current.classList.remove('pacman');
+                        if(next.classList.contains('food')) {
+                            next.classList.remove('food');
+                        }
+                        next.classList.add('pacman');
+                        next.classList.add(`direction-${direction}`);
+                        next.setAttribute('data-opened', !opened === true ? "true" : "false");
                     }
-                    next.classList.add('pacman');
-                    next.classList.add(`direction-${direction}`);
-                    next.setAttribute('data-opened', !opened === true ? "true" : "false");
                 } else current.classList.add(`direction-${direction}`);
             }
+
             let pacman = document.querySelector(`.pacman`);
             let position = get_position(pacman);
             switch (sens) {
@@ -67,14 +114,27 @@ class Pacman extends Character {
                     break;
             }
         }
-        function move_ghost(color, sens) {
+        function move_ghost(color, sens, directions = DIRECTION) {
             function move(current, next) {
                 if(next && !next.classList.contains('wall') && !next.classList.contains('ghost')) {
+                    if(next.classList.contains('pacman')) {
+                        events.onPacmanCollision({
+                            "data-position_x": next.getAttribute('data-position_x'),
+                            "data-position_y": next.getAttribute('data-position_y'),
+                            "data-opened": next.getAttribute('data-opened'),
+                        }, {
+                            "data-position_x": current.getAttribute('data-position_x'),
+                            "data-position_y": current.getAttribute('data-position_y'),
+                            "data-color": current.getAttribute('data-color'),
+                        });
+                    }
                     current.classList.remove('ghost');
                     current.removeAttribute('data-color');
                     next.classList.add('ghost');
                     next.setAttribute('data-color', color);
+                    return true;
                 }
+                return false;
             }
 
             let ghost = document.querySelector(`.ghost[data-color="${color}"]`);
@@ -82,16 +142,68 @@ class Pacman extends Character {
                 let position = get_position(ghost);
                 switch (sens) {
                     case 'left':
-                        move(ghost, document.querySelector(`.pacman-block[data-position_x="${position.x - 1}"][data-position_y="${position.y}"]`));
+                        if(!move(ghost, document.querySelector(`.pacman-block[data-position_x="${position.x - 1}"][data-position_y="${position.y}"]`))) {
+                            let directions_tmp = [];
+                            for(let direction_i in directions) {
+                                if(directions[direction_i] !== sens) {
+                                    directions_tmp.push(directions[direction_i]);
+                                }
+                            }
+                            directions = directions_tmp;
+
+                            let direction_i = Math.floor(Math.random() * ((directions.length - 1) + 1));
+                            let direction = directions[direction_i];
+                            // console.log(directions, direction, direction_i);
+                            move_ghost(color, direction, directions);
+                        }
                         break;
                     case 'right':
-                        move(ghost, document.querySelector(`.pacman-block[data-position_x="${position.x + 1}"][data-position_y="${position.y}"]`));
+                        if(!move(ghost, document.querySelector(`.pacman-block[data-position_x="${position.x + 1}"][data-position_y="${position.y}"]`))) {
+                            let directions_tmp = [];
+                            for(let direction_i in directions) {
+                                if(directions[direction_i] !== sens) {
+                                    directions_tmp.push(directions[direction_i]);
+                                }
+                            }
+                            directions = directions_tmp;
+
+                            let direction_i = Math.floor(Math.random() * ((directions.length - 1) + 1));
+                            let direction = directions[direction_i];
+                            // console.log(directions, direction, direction_i);
+                            move_ghost(color, direction, directions);
+                        }
                         break;
                     case 'top':
-                        move(ghost, document.querySelector(`.pacman-block[data-position_x="${position.x}"][data-position_y="${position.y - 1}"]`));
+                        if(!move(ghost, document.querySelector(`.pacman-block[data-position_x="${position.x}"][data-position_y="${position.y - 1}"]`))) {
+                            let directions_tmp = [];
+                            for(let direction_i in directions) {
+                                if(directions[direction_i] !== sens) {
+                                    directions_tmp.push(directions[direction_i]);
+                                }
+                            }
+                            directions = directions_tmp;
+
+                            let direction_i = Math.floor(Math.random() * ((directions.length - 1) + 1));
+                            let direction = directions[direction_i];
+                            // console.log(directions, direction, direction_i);
+                            move_ghost(color, direction, directions);
+                        }
                         break;
                     case 'bottom':
-                        move(ghost, document.querySelector(`.pacman-block[data-position_x="${position.x}"][data-position_y="${position.y + 1}"]`));
+                        if(!move(ghost, document.querySelector(`.pacman-block[data-position_x="${position.x}"][data-position_y="${position.y + 1}"]`))) {
+                            let directions_tmp = [];
+                            for(let direction_i in directions) {
+                                if(directions[direction_i] !== sens) {
+                                    directions_tmp.push(directions[direction_i]);
+                                }
+                            }
+                            directions = directions_tmp;
+
+                            let direction_i = Math.floor(Math.random() * ((directions.length - 1) + 1));
+                            let direction = directions[direction_i];
+                            // console.log(directions, direction, direction_i);
+                            move_ghost(color, direction, directions);
+                        }
                         break;
                     default:
                         break;
@@ -182,10 +294,16 @@ class Pacman extends Character {
             }
         }
         function animate_ghosts() {
-            setInterval(function () {
+            ghostSetIntervals.red = setInterval(function () {
                 move_ghost('red', DIRECTION[Math.floor(Math.random() * ((DIRECTION.length - 1) + 1))]);
+            }, 500);
+            ghostSetIntervals.blue = setInterval(function () {
                 move_ghost('blue', DIRECTION[Math.floor(Math.random() * ((DIRECTION.length - 1) + 1))]);
+            }, 500);
+            ghostSetIntervals.yellow = setInterval(function () {
                 move_ghost('yellow', DIRECTION[Math.floor(Math.random() * ((DIRECTION.length - 1) + 1))]);
+            }, 500);
+            ghostSetIntervals.pink = setInterval(function () {
                 move_ghost('pink', DIRECTION[Math.floor(Math.random() * ((DIRECTION.length - 1) + 1))]);
             }, 500);
         }

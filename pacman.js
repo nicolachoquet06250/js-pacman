@@ -18,7 +18,7 @@ class Pacman extends Character {
     }
 
     onScoreChange(newScore, oldScore) {
-        for(let score of document.querySelectorAll('.score')) {
+        for(let score of document.querySelectorAll('.score-label')) {
             score.innerHTML = newScore;
         }
     }
@@ -30,6 +30,7 @@ class Pacman extends Character {
             yellow: null,
             pink: null
         };
+        let pacmanSetInterval = null;
         let events = {
             _score: 0,
             set score(score) {
@@ -43,10 +44,39 @@ class Pacman extends Character {
                 return this._score;
             },
             onScoreChange(score) {
-                for(let _score of document.querySelectorAll('.score')) {
+                for(let _score of document.querySelectorAll('.score-label')) {
                     _score.innerHTML = score;
                 }
             },
+
+            _food: 0,
+            set food(food) {
+                let _food = this._food;
+                if(food !== _food) {
+                    this.onFoodChange(food);
+                }
+                this._food = food;
+            },
+            get food() {
+                return this._food;
+            },
+            onFoodChange(food) {
+                for(let _food of document.querySelectorAll('.food-label')) {
+                    _food.innerHTML = food;
+                }
+            },
+
+            nbFood: 0,
+            countNbFood() {
+                for(let row of MAPS.level1) {
+                    for(let col of row) {
+                        if(col === FOOD) {
+                            this.nbFood++;
+                        }
+                    }
+                }
+            },
+
             onPacmanCollision(pacman, ghost) {
                 unanimate_ghosts();
                 let pacman_o = document.querySelector(`.pacman[data-position_x="${pacman['data-position_x']}"][data-position_y="${pacman['data-position_y']}"]`);
@@ -63,7 +93,8 @@ class Pacman extends Character {
                 setTimeout(function () {
                     pacman_o.classList.add('pacman');
                 }, 1500);
-                if(events.score === 0) {
+                this.score--;
+                if(this.score === 0) {
                     setTimeout(function () {
                         pacman_o.classList.remove('pacman');
                     }, 2000);
@@ -74,11 +105,10 @@ class Pacman extends Character {
                     setTimeout(function () {
                         pacman_o.classList.remove('pacman', 'dead');
                         pacman_o.removeAttribute('data-opened');
-                        console.log('GAME OVER');
+                        loose();
                     }, 4700);
                 }
-                if(events.score > 0) {
-                    events.score--;
+                if(this.score > 0) {
                     setTimeout(function () {
                         animate_ghosts();
                     }, 2000);
@@ -107,9 +137,89 @@ class Pacman extends Character {
                     ghost_o.removeAttribute('data-color');
                     ghost_o.classList.remove('dead');
                 }, 2000);
-            }
+            },
+
+            onKeyDown(e) {
+                let pacman = document.querySelector('.pacman');
+                pacman.classList.remove('direction-top', 'direction-bottom', 'direction-left');
+                switch (e.keyCode) {
+                    case KEY.LEFT:
+                        pacman.classList.add('direction-left');
+                        if(pacmanSetInterval === null) {
+                            animate_pacman();
+                        }
+                        // move_pacman('left');
+                        break;
+                    case KEY.RIGHT:
+                        if(pacmanSetInterval === null) {
+                            animate_pacman();
+                        }
+                        // move_pacman('right');
+                        break;
+                    case KEY.DOWN:
+                        pacman.classList.add('direction-bottom');
+                        if(pacmanSetInterval === null) {
+                            animate_pacman();
+                        }
+                        // move_pacman('bottom');
+                        break;
+                    case KEY.UP:
+                        pacman.classList.add('direction-top');
+                        if(pacmanSetInterval === null) {
+                            animate_pacman();
+                        }
+                        // move_pacman('top');
+                        break;
+                    default:
+                        break;
+                }
+            },
+            onGoTop() {
+                let pacman = document.querySelector('.pacman');
+                pacman.classList.remove('direction-top', 'direction-bottom', 'direction-left');
+                pacman.classList.add('direction-top');
+                if(pacmanSetInterval === null) {
+                    animate_pacman();
+                }
+                // move_pacman('top');
+            },
+            onGoBottom() {
+                let pacman = document.querySelector('.pacman');
+                pacman.classList.remove('direction-top', 'direction-bottom', 'direction-left');
+                pacman.classList.add('direction-bottom');
+                if(pacmanSetInterval === null) {
+                    animate_pacman();
+                }
+                // move_pacman('bottom');
+            },
+            onGoLeft() {
+                let pacman = document.querySelector('.pacman');
+                pacman.classList.remove('direction-top', 'direction-bottom', 'direction-left');
+                pacman.classList.add('direction-left');
+                if(pacmanSetInterval === null) {
+                    animate_pacman();
+                }
+                // move_pacman('left');
+            },
+            onGoRight() {
+                let pacman = document.querySelector('.pacman');
+                pacman.classList.remove('direction-top', 'direction-bottom', 'direction-left');
+                if(pacmanSetInterval === null) {
+                    animate_pacman();
+                }
+                // move_pacman('right');
+            },
         };
 
+        function win() {
+            unanimate_ghosts();
+            remove_events();
+            console.log("YOU ARE THE WINNER !!");
+        }
+        function loose() {
+            remove_events();
+            console.log('GAME OVER');
+        }
         function get_position(element) {
             return {
                 x: parseInt(element.getAttribute('data-position_x')),
@@ -121,6 +231,12 @@ class Pacman extends Character {
                 let opened = current.getAttribute('data-opened') === "true";
                 current.classList.remove('direction-left', 'direction-right', 'direction-top', 'direction-bottom');
                 if(next) {
+                    if(next.classList.contains('food') && !next.classList.contains('ghost')) {
+                        events.food++;
+                        if(events.food === events.nbFood) {
+                            win();
+                        }
+                    }
                     if (next.classList.contains('ghost')) {
                         events.onGhostCollision({
                             "data-position_x": parseInt(current.getAttribute('data-position_x')),
@@ -205,7 +321,6 @@ class Pacman extends Character {
 
                             let direction_i = Math.floor(Math.random() * ((directions.length - 1) + 1));
                             let direction = directions[direction_i];
-                            // console.log(directions, direction, direction_i);
                             move_ghost(color, direction, directions);
                         }
                         break;
@@ -221,7 +336,6 @@ class Pacman extends Character {
 
                             let direction_i = Math.floor(Math.random() * ((directions.length - 1) + 1));
                             let direction = directions[direction_i];
-                            // console.log(directions, direction, direction_i);
                             move_ghost(color, direction, directions);
                         }
                         break;
@@ -237,7 +351,6 @@ class Pacman extends Character {
 
                             let direction_i = Math.floor(Math.random() * ((directions.length - 1) + 1));
                             let direction = directions[direction_i];
-                            // console.log(directions, direction, direction_i);
                             move_ghost(color, direction, directions);
                         }
                         break;
@@ -253,7 +366,6 @@ class Pacman extends Character {
 
                             let direction_i = Math.floor(Math.random() * ((directions.length - 1) + 1));
                             let direction = directions[direction_i];
-                            // console.log(directions, direction, direction_i);
                             move_ghost(color, direction, directions);
                         }
                         break;
@@ -263,31 +375,23 @@ class Pacman extends Character {
             }
         }
         function init_events() {
-            document.addEventListener('keydown', e => {
-                switch (e.keyCode) {
-                    case KEY.LEFT:
-                        move_pacman('left');
-                        break;
-                    case KEY.RIGHT:
-                        move_pacman('right');
-                        break;
-                    case KEY.DOWN:
-                        move_pacman('bottom');
-                        break;
-                    case KEY.UP:
-                        move_pacman('top');
-                        break;
-                    default:
-                        break;
-                }
-            });
-            document.querySelector('.go-top').addEventListener('click', () => move_pacman('top'));
-            document.querySelector('.go-bottom').addEventListener('click', () => move_pacman('bottom'));
-            document.querySelector('.go-left').addEventListener('click', () => move_pacman('left'));
-            document.querySelector('.go-right').addEventListener('click', () => move_pacman('right'));
+            document.addEventListener('keydown', events.onKeyDown);
+            document.querySelector('.go-top').addEventListener('click', events.onGoTop);
+            document.querySelector('.go-bottom').addEventListener('click', events.onGoBottom);
+            document.querySelector('.go-left').addEventListener('click', events.onGoLeft);
+            document.querySelector('.go-right').addEventListener('click', events.onGoRight);
+        }
+        function remove_events() {
+            document.removeEventListener('keydown', events.onKeyDown);
+            document.querySelector('.go-top').removeEventListener('click', events.onGoTop);
+            document.querySelector('.go-bottom').removeEventListener('click', events.onGoBottom);
+            document.querySelector('.go-left').removeEventListener('click', events.onGoLeft);
+            document.querySelector('.go-right').removeEventListener('click', events.onGoRight);
         }
         function init_html_map() {
             events.score = 3;
+            events.countNbFood();
+            console.log(events.nbFood);
             let board = document.querySelector('#board');
             board.style.height = `${MAPS.level1.length * COL_SIZE + COL_SIZE + 10}px`;
             board.style.width = `${5 + (MAPS.level1[0].length * COL_SIZE)}px`;
@@ -365,6 +469,23 @@ class Pacman extends Character {
             clearInterval(ghostSetIntervals.blue);
             clearInterval(ghostSetIntervals.yellow);
             clearInterval(ghostSetIntervals.pink);
+        }
+        function animate_pacman() {
+            pacmanSetInterval = setInterval(function () {
+                let pacman = document.querySelector('.pacman');
+                if(pacman.classList.contains('direction-bottom')) {
+                    move_pacman('bottom');
+                } else if (pacman.classList.contains('direction-left')) {
+                    move_pacman('left');
+                } else if (pacman.classList.contains('direction-top')) {
+                    move_pacman('top');
+                } else {
+                    move_pacman('right');
+                }
+            }, 500);
+        }
+        function unanimate_pacman() {
+            clearInterval(pacmanSetInterval);
         }
         init_html_map();
         init_events();

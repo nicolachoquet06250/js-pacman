@@ -35,7 +35,7 @@ class Board extends Drawable {
 
     onLevelChange(newLevel) {
         this.selectGrid();
-        for(let level of document.querySelectorAll('.level')) {
+        for(let level of document.querySelectorAll('.level-label')) {
             level.innerHTML = newLevel;
         }
     }

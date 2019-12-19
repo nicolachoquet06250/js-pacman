@@ -4,6 +4,7 @@
 
 .game-board {
     border: solid 2px;
+    line-height: unset;
 }
 
 .play-button, .pause-button {
@@ -15,4 +16,71 @@
 
 .c-pointer {
     cursor: pointer;
+}
+
+.pacman-block {
+    margin: unset;
+    padding: unset;
+}
+
+.pacman[data-opened="true"] {
+    background-image: url(images/pacman.png);
+    background-repeat: no-repeat;
+    background-size: 95%;
+}
+
+.pacman.direction-top[data-opened="true"] {
+    transform: rotate(-90deg);
+}
+
+.pacman.direction-bottom[data-opened="true"] {
+    transform: rotate(90deg);
+}
+
+.pacman.direction-left[data-opened="true"] {
+    transform: rotate(180deg);
+}
+
+.pacman[data-opened="false"] {
+    background-image: url(images/pacman_closed.svg);
+    background-repeat: no-repeat;
+    background-size: 95%;
+}
+
+.ghost[data-color="red"] {
+    background-image: url(images/fantome_rouge.png);
+    background-repeat: no-repeat;
+    background-size: 95%;
+}
+
+.ghost[data-color="blue"] {
+    background-image: url(images/fantome_bleu.png);
+    background-repeat: no-repeat;
+    background-size: 95%;
+}
+
+.ghost[data-color="yellow"] {
+    background-image: url(images/fantome_jaune.png);
+    background-repeat: no-repeat;
+    background-size: 95%;
+}
+
+.ghost[data-color="pink"] {
+    background-image: url(images/fantome_rose.png);
+    background-repeat: no-repeat;
+    background-size: 95%;
+}
+
+.food {
+    background-image: url(images/food.svg);
+    background-repeat: no-repeat;
+    background-size: 95%;
+}
+
+.lawn {
+    background-color: #4caf50;
+}
+
+.wall {
+    background-color: darkorange;
 }

@@ -53,3 +53,5 @@ const KEY = {
     P: 80
 };
 Object.freeze(KEY);
+
+const COL_SIZE = 30;

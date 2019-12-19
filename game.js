@@ -1,7 +1,7 @@
 class Game {
     constructor() {
         this.canvas = document.querySelector('#board');
-        this.context = this.canvas.getContext('2d');
+        // this.context = this.canvas.getContext('2d');
         this.time = {};
         this.boardIs(new Board(MAPS));
         this.account = null;

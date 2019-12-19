@@ -24,241 +24,159 @@ class Pacman extends Character {
     }
 
     draw() {
-        function rectArrondi(ctx, x, y, w, hauteur, rayon) {
-            ctx.beginPath();
-            ctx.moveTo(x, y + rayon);
-            ctx.lineTo(x, y + hauteur - rayon);
-            ctx.quadraticCurveTo(x, y + hauteur, x + rayon, y + hauteur);
-            ctx.lineTo(x + w - rayon, y + hauteur);
-            ctx.quadraticCurveTo(x + w, y + hauteur, x + w, y + hauteur - rayon);
-            ctx.lineTo(x + w, y + rayon);
-            ctx.quadraticCurveTo(x + w, y, x + w - rayon, y);
-            ctx.lineTo(x + rayon,y);
-            ctx.quadraticCurveTo(x, y, x, y + rayon);
-            ctx.stroke();
+        function get_position(element) {
+            return {
+                x: parseInt(element.getAttribute('data-position_x')),
+                y: parseInt(element.getAttribute('data-position_y'))
+            };
         }
-        function dessiner_obstacle_vide(ctx, x, y, w, h) {
-            rectArrondi(ctx, x, y, w, h, (h >= 30 ? 10 : (h - 10)));
-        }
-        function save_pacman(x, y, opened) {
-            document.querySelector('#board').setAttribute('data-pacman', JSON.stringify({ position: { x, y }, opened }));
-        }
-        function save_fantome(color, x, y) {
-            let fantomes = {};
-            if(document.querySelector('#board').getAttribute('data-fantomes') !== undefined
-                && document.querySelector('#board').getAttribute('data-fantomes') !== null) {
-                fantomes = JSON.parse(document.querySelector('#board').getAttribute('data-fantomes'));
+        function move_pacman(sens) {
+            function move(current, next, direction) {
+                let opened = current.getAttribute('data-opened') === "true";
+                current.classList.remove('direction-left', 'direction-right', 'direction-top', 'direction-bottom');
+                if(next && !next.classList.contains('wall')) {
+                    current.removeAttribute('data-opened');
+                    current.classList.remove('pacman');
+                    if(next.classList.contains('food')) {
+                        next.classList.remove('food');
+                    }
+                    if(next.classList.contains('ghost')) {
+                        next.classList.remove('ghost');
+                    }
+                    next.classList.add('pacman');
+                    next.classList.add(`direction-${direction}`);
+                    next.setAttribute('data-opened', !opened === true ? "true" : "false");
+                } else current.classList.add(`direction-${direction}`);
             }
-            fantomes[color] = { position: { x, y } };
-            document.querySelector('#board').setAttribute('data-fantomes', JSON.stringify(fantomes));
-        }
-        function get_pacman_properties() {
-            return JSON.parse(document.querySelector('#board').getAttribute('data-pacman'));
-        }
-        function get_fantome_properties(color = 'black') {
-            return JSON.parse(document.querySelector('#board').getAttribute('data-fantomes'))[color];
-        }
-        function clear_pacman(ctx, x, y, opened = true) {
-            ctx.fillStyle = 'white';
-            ctx.save();
-            ctx.globalCompositeOperation = 'destination-out';
-            let startAngle = opened ? Math.PI / 5 : Math.PI;
-            let endAngle = opened ? -Math.PI / 5 : -Math.PI;
-            ctx.beginPath();
-            ctx.arc(x, y - 6, 12.5, startAngle, endAngle, false);
-            ctx.fill();
-            ctx.restore();
-        }
-        function clear_fantome(ctx, x, y) {
-            function dessiner_contours(ctx) {
-                ctx.fillStyle = 'transparent';
-                ctx.beginPath();
-                ctx.moveTo(x, y);
-                ctx.lineTo(x, y - 14);
-                ctx.bezierCurveTo(x, y - 22, x + 6, y - 28, x + 4, y - 28);
-                ctx.bezierCurveTo(x + 22, y - 40, x + 28, y - 22, x + 28, y + 14);
-                ctx.lineTo(x + 28, y);
-                ctx.lineTo(x + 23.34, y - 4.67);
-                ctx.lineTo(x + 18.67, y);
-                ctx.lineTo(x + 14, y - 4.67);
-                ctx.lineTo(x + 9.33, y);
-                ctx.lineTo(x + 4.67, y - 4.67);
-                ctx.lineTo(x, y);
-                ctx.fill();
+            let pacman = document.querySelector(`.pacman`);
+            let position = get_position(pacman);
+            switch (sens) {
+                case 'left':
+                    move(pacman, document.querySelector(`.pacman-block[data-position_x="${position.x - 1}"][data-position_y="${position.y}"]`), sens);
+                    break;
+                case 'right':
+                    move(pacman, document.querySelector(`.pacman-block[data-position_x="${position.x + 1}"][data-position_y="${position.y}"]`), sens);
+                    break;
+                case 'top':
+                    move(pacman, document.querySelector(`.pacman-block[data-position_x="${position.x}"][data-position_y="${position.y - 1}"]`), sens);
+                    break;
+                case 'bottom':
+                    move(pacman, document.querySelector(`.pacman-block[data-position_x="${position.x}"][data-position_y="${position.y + 1}"]`), sens);
+                    break;
+                default:
+                    break;
             }
-            dessiner_contours(ctx);
         }
-        function dessiner_pacman(ctx, x, y, sens, opened = true) {
-            ctx.fillStyle = 'yellow';
-            ctx.beginPath();
-            let startAngle = opened ? Math.PI / 5 : Math.PI;
-            let endAngle = opened ? -Math.PI / 5 : -Math.PI;
-            ctx.arc(x, y - 6, 12, startAngle, endAngle, false);
-            if(opened) {
-                ctx.lineTo(x, y - 6);
+        function move_ghost(color, sens) {
+            function move(current, next) {
+                if(next && !next.classList.contains('wall') && !next.classList.contains('ghost')) {
+                    current.classList.remove('ghost');
+                    current.removeAttribute('data-color');
+                    next.classList.add('ghost');
+                    next.setAttribute('data-color', color);
+                }
             }
-            ctx.fill();
-            save_pacman(x, y, opened);
-        }
-        function dessiner_nouriture(ctx, x, y) {
-            ctx.fillStyle = 'black';
-            ctx.fillRect(x, y, 4, 4);
-        }
-        function dessiner_fantome(ctx, x, y, color = 'black') {
-            function dessiner_contours(ctx, color) {
-                ctx.fillStyle = color;
-                ctx.beginPath();
-                ctx.moveTo(x, y);
-                ctx.lineTo(x, y - 14);
-                ctx.bezierCurveTo(x, y - 22, x + 6, y - 28, x + 4, y - 28);
-                ctx.bezierCurveTo(x + 22, y - 40, x + 28, y - 22, x + 28, y + 14);
-                ctx.lineTo(x + 28, y);
-                ctx.lineTo(x + 23.34, y - 4.67);
-                ctx.lineTo(x + 18.67, y);
-                ctx.lineTo(x + 14, y - 4.67);
-                ctx.lineTo(x + 9.33, y);
-                ctx.lineTo(x + 4.67, y - 4.67);
-                ctx.lineTo(x, y);
-                ctx.fill();
-            }
-            function dessiner_yeux(ctx) {
-                ctx.fillStyle = "white";
-                ctx.beginPath();
 
-                ctx.ellipse(x + 6, y - 18, 3, 6, 0, 0, 2 * Math.PI);
-                ctx.ellipse(x + 16, y - 18, 3, 6, 0, 0, 2 * Math.PI);
-                ctx.fill();
-            }
-            function dessiner_yeux_cercle_noir(ctx, cote = 'left') {
-                let _x;
-                let _y;
-                switch (cote) {
+            let ghost = document.querySelector(`.ghost[data-color="${color}"]`);
+            if(ghost) {
+                let position = get_position(ghost);
+                switch (sens) {
                     case 'left':
-                        _x = x + 6;
-                        _y = y - 18;
+                        move(ghost, document.querySelector(`.pacman-block[data-position_x="${position.x - 1}"][data-position_y="${position.y}"]`));
                         break;
                     case 'right':
-                        _x = x + 16;
-                        _y = y - 18;
+                        move(ghost, document.querySelector(`.pacman-block[data-position_x="${position.x + 1}"][data-position_y="${position.y}"]`));
+                        break;
+                    case 'top':
+                        move(ghost, document.querySelector(`.pacman-block[data-position_x="${position.x}"][data-position_y="${position.y - 1}"]`));
+                        break;
+                    case 'bottom':
+                        move(ghost, document.querySelector(`.pacman-block[data-position_x="${position.x}"][data-position_y="${position.y + 1}"]`));
                         break;
                     default:
                         break;
                 }
-                ctx.fillStyle = "black";
-                ctx.beginPath();
-                ctx.arc(_x, _y, 2, 0, Math.PI * 2, true);
-                ctx.fill();
-            }
-
-            dessiner_contours(ctx, color);
-            dessiner_yeux(ctx);
-            dessiner_yeux_cercle_noir(ctx, 'right');
-            dessiner_yeux_cercle_noir(ctx, 'left');
-            save_fantome(color, x, y);
-        }
-        function move_pacman(ctx, sens) {
-            let pacman = get_pacman_properties();
-            clear_pacman(ctx, pacman.position.x, pacman.position.y, pacman.opened);
-            switch (sens) {
-                case 'left':
-                    dessiner_pacman(ctx, pacman.position.x - 10, pacman.position.y, 'left', !pacman.opened);
-                    break;
-                case 'right':
-                    dessiner_pacman(ctx, pacman.position.x + 10, pacman.position.y, 'right', !pacman.opened);
-                    break;
-                case 'top':
-                    dessiner_pacman(ctx, pacman.position.x, pacman.position.y - 10, 'top', !pacman.opened);
-                    break;
-                case 'bottom':
-                    dessiner_pacman(ctx, pacman.position.x, pacman.position.y + 10, 'bottom', !pacman.opened);
-                    break;
-                default:
-                    break;
             }
         }
-        function move_fantome(ctx, color, sens) {
-            let fantome = get_fantome_properties(color);
-            clear_fantome(ctx, fantome.position.x, fantome.position.y);
-            switch (sens) {
-                case 'left':
-                    dessiner_fantome(ctx, fantome.position.x - 10, fantome.position.y, color);
-                    break;
-                case 'right':
-                    dessiner_fantome(ctx, fantome.position.x + 10, fantome.position.y, color);
-                    break;
-                case 'top':
-                    dessiner_fantome(ctx, fantome.position.x, fantome.position.y - 10, color);
-                    break;
-                case 'bottom':
-                    dessiner_fantome(ctx, fantome.position.x, fantome.position.y + 10, color);
-                    break;
-                default:
-                    break;
-            }
-        }
-        function init_events(ctx) {
+        function init_events() {
             document.addEventListener('keydown', e => {
                 switch (e.keyCode) {
                     case KEY.LEFT:
-                        move_pacman(ctx, 'left');
+                        move_pacman('left');
                         break;
                     case KEY.RIGHT:
-                        move_pacman(ctx, 'right');
+                        move_pacman('right');
                         break;
                     case KEY.DOWN:
-                        move_pacman(ctx, 'bottom');
+                        move_pacman('bottom');
                         break;
                     case KEY.UP:
-                        move_pacman(ctx, 'top');
+                        move_pacman('top');
                         break;
                     default:
                         break;
                 }
             });
-            document.querySelector('.go-top').addEventListener('click', () => move_pacman(ctx, 'top'));
-            document.querySelector('.go-bottom').addEventListener('click', () => move_pacman(ctx, 'bottom'));
-            document.querySelector('.go-left').addEventListener('click', () => move_pacman(ctx, 'left'));
-            document.querySelector('.go-right').addEventListener('click', () => move_pacman(ctx, 'right'));
+            document.querySelector('.go-top').addEventListener('click', () => move_pacman('top'));
+            document.querySelector('.go-bottom').addEventListener('click', () => move_pacman('bottom'));
+            document.querySelector('.go-left').addEventListener('click', () => move_pacman('left'));
+            document.querySelector('.go-right').addEventListener('click', () => move_pacman('right'));
         }
-        function dessiner() {
-            let canvas = document.querySelector('#board');
-            if (canvas.getContext) {
-                let ctx = canvas.getContext('2d');
-
-                dessiner_obstacle_vide(ctx, 53, 50, 49, 30);
-                dessiner_obstacle_vide(ctx, 135, 50, 49, 30);
-                dessiner_obstacle_vide(ctx, 53, 110, 49, 16);
-                dessiner_obstacle_vide(ctx, 135, 110, 49, 16);
-
-                // horizontals
-                for(let i = 0; i < 18; i++) {
-                    dessiner_nouriture(ctx, 10 + i * 16, 12);
-                    dessiner_nouriture(ctx, 10 + i * 16, 91);
+        function init_html_map() {
+            let board = document.querySelector('#board');
+            board.style.height = `${MAPS.level1.length * COL_SIZE + COL_SIZE + 10}px`;
+            board.style.width = `${5 + (MAPS.level1[0].length * COL_SIZE)}px`;
+            for(let row_i in MAPS.level1) {
+                let row = MAPS.level1[row_i];
+                for(let col_i in row) {
+                    let element = document.createElement('div');
+                    element.classList.add('d-inline-block');
+                    element.classList.add('pacman-block');
+                    element.classList.add('lawn');
+                    element.style.width = `${COL_SIZE}px`;
+                    element.style.height = `${COL_SIZE}px`;
+                    element.setAttribute('data-position_x', col_i);
+                    element.setAttribute('data-position_y', row_i);
+                    switch (row[col_i]) {
+                        case PACMAN:
+                            element.classList.add('pacman');
+                            element.setAttribute('data-opened', 'true');
+                            break;
+                        case GHOSTS[0]:
+                            element.classList.add('ghost');
+                            element.setAttribute('data-color', 'red');
+                            break;
+                        case GHOSTS[1]:
+                            element.classList.add('ghost');
+                            element.setAttribute('data-color', 'blue');
+                            break;
+                        case GHOSTS[2]:
+                            element.classList.add('ghost');
+                            element.setAttribute('data-color', 'yellow');
+                            break;
+                        case GHOSTS[3]:
+                            element.classList.add('ghost');
+                            element.setAttribute('data-color', 'pink');
+                            break;
+                        case FOOD:
+                            element.classList.add('food');
+                            break;
+                        case HERBE:
+                            element.classList.add('lawn');
+                            break;
+                        case MUR:
+                            element.classList.add('wall');
+                            break;
+                        default:
+                            break;
+                    }
+                    board.append(element);
                 }
-
-                // verticals
-                for(let i = 0; i < 8; i++) {
-                    dessiner_nouriture(ctx, 122, 27 + i * 16);
-                    dessiner_nouriture(ctx, 26, 27 + i * 16);
-                }
-
-                dessiner_pacman(ctx, 20, 20, 'right', true);
-
-                // Fantome
-                dessiner_fantome(ctx, 100, 36, 'red');
-                dessiner_fantome(ctx, 83, 110, 'black');
-                dessiner_fantome(ctx, 215, 110, 'purple');
-                dessiner_fantome(ctx, 215, 36, 'yellow');
-
-                move_fantome(ctx, 'red', 'bottom');
-                move_fantome(ctx, 'red', 'bottom');
-                move_fantome(ctx, 'red', 'right');
-                move_fantome(ctx, 'red', 'bottom');
-
-                init_events(ctx);
+                console.log(row);
             }
         }
-        dessiner();
+        init_html_map();
+        init_events();
     }
 
     onPositionChange(newPosition, oldPosition) {

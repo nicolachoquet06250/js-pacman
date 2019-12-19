@@ -49,6 +49,12 @@
     background-size: 95%;
 }
 
+.pacman.dead {
+    background-image: url(images/pacman_death.gif);
+    background-repeat: no-repeat;
+    background-size: 95%;
+}
+
 .pacman.ghost,
 .pacman.ghost.direction-bottom,
 .pacman.ghost.direction-left,

@@ -2,7 +2,7 @@ class Pacman extends Character {
 
     constructor(pseudo) {
         super(pseudo);
-        this._score = 0;
+        this._score = 3;
     }
 
     set score(score) {
@@ -31,8 +31,58 @@ class Pacman extends Character {
             pink: null
         };
         let events = {
+            _score: 0,
+            set score(score) {
+                let _score = this._score;
+                if(score !== _score) {
+                    this.onScoreChange(score);
+                }
+                this._score = score
+            },
+            get score() {
+                return this._score;
+            },
+            onScoreChange(score) {
+                for(let _score of document.querySelectorAll('.score')) {
+                    _score.innerHTML = score;
+                }
+            },
             onPacmanCollision(pacman, ghost) {
+                unanimate_ghosts();
+                let pacman_o = document.querySelector(`.pacman[data-position_x="${pacman['data-position_x']}"][data-position_y="${pacman['data-position_y']}"]`);
                 console.log('onPacmanCollision', pacman, ghost);
+                setTimeout(function () {
+                    pacman_o.classList.remove('pacman');
+                }, 0);
+                setTimeout(function () {
+                    pacman_o.classList.add('pacman');
+                }, 500);
+                setTimeout(function () {
+                    pacman_o.classList.remove('pacman');
+                }, 1000);
+                setTimeout(function () {
+                    pacman_o.classList.add('pacman');
+                }, 1500);
+                if(events.score === 0) {
+                    setTimeout(function () {
+                        pacman_o.classList.remove('pacman');
+                    }, 2000);
+                    setTimeout(function () {
+                        pacman_o.classList.add('pacman');
+                        pacman_o.classList.add('dead');
+                    }, 2000);
+                    setTimeout(function () {
+                        pacman_o.classList.remove('pacman', 'dead');
+                        pacman_o.removeAttribute('data-opened');
+                        console.log('GAME OVER');
+                    }, 4700);
+                }
+                if(events.score > 0) {
+                    events.score--;
+                    setTimeout(function () {
+                        animate_ghosts();
+                    }, 2000);
+                }
             },
             onGhostCollision(pacman, ghost) {
                 clearInterval(ghostSetIntervals[ghost["data-color"]]);
@@ -116,7 +166,7 @@ class Pacman extends Character {
         }
         function move_ghost(color, sens, directions = DIRECTION) {
             function move(current, next) {
-                if(next && !next.classList.contains('wall') && !next.classList.contains('ghost')) {
+                if(next) {
                     if(next.classList.contains('pacman')) {
                         events.onPacmanCollision({
                             "data-position_x": next.getAttribute('data-position_x'),
@@ -128,11 +178,13 @@ class Pacman extends Character {
                             "data-color": current.getAttribute('data-color'),
                         });
                     }
-                    current.classList.remove('ghost');
-                    current.removeAttribute('data-color');
-                    next.classList.add('ghost');
-                    next.setAttribute('data-color', color);
-                    return true;
+                    if (!next.classList.contains('wall') && !next.classList.contains('ghost') && !next.classList.contains('pacman')) {
+                        current.classList.remove('ghost');
+                        current.removeAttribute('data-color');
+                        next.classList.add('ghost');
+                        next.setAttribute('data-color', color);
+                        return true;
+                    }
                 }
                 return false;
             }
@@ -235,6 +287,7 @@ class Pacman extends Character {
             document.querySelector('.go-right').addEventListener('click', () => move_pacman('right'));
         }
         function init_html_map() {
+            events.score = 3;
             let board = document.querySelector('#board');
             board.style.height = `${MAPS.level1.length * COL_SIZE + COL_SIZE + 10}px`;
             board.style.width = `${5 + (MAPS.level1[0].length * COL_SIZE)}px`;
@@ -306,6 +359,12 @@ class Pacman extends Character {
             ghostSetIntervals.pink = setInterval(function () {
                 move_ghost('pink', DIRECTION[Math.floor(Math.random() * ((DIRECTION.length - 1) + 1))]);
             }, 500);
+        }
+        function unanimate_ghosts() {
+            clearInterval(ghostSetIntervals.red);
+            clearInterval(ghostSetIntervals.blue);
+            clearInterval(ghostSetIntervals.yellow);
+            clearInterval(ghostSetIntervals.pink);
         }
         init_html_map();
         init_events();

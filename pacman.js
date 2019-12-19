@@ -128,6 +128,10 @@ class Pacman extends Character {
             board.style.width = `${5 + (MAPS.level1[0].length * COL_SIZE)}px`;
             for(let row_i in MAPS.level1) {
                 let row = MAPS.level1[row_i];
+                let row_o = document.createElement('div');
+                row_o.classList.add('row');
+                let col_12 = document.createElement('div');
+                col_12.classList.add('col-12');
                 for(let col_i in row) {
                     let element = document.createElement('div');
                     element.classList.add('d-inline-block');
@@ -170,13 +174,24 @@ class Pacman extends Character {
                         default:
                             break;
                     }
-                    board.append(element);
+                    col_12.append(element);
                 }
+                row_o.append(col_12);
+                board.append(row_o);
                 console.log(row);
             }
         }
+        function animate_ghosts() {
+            setInterval(function () {
+                move_ghost('red', DIRECTION[Math.floor(Math.random() * ((DIRECTION.length - 1) + 1))]);
+                move_ghost('blue', DIRECTION[Math.floor(Math.random() * ((DIRECTION.length - 1) + 1))]);
+                move_ghost('yellow', DIRECTION[Math.floor(Math.random() * ((DIRECTION.length - 1) + 1))]);
+                move_ghost('pink', DIRECTION[Math.floor(Math.random() * ((DIRECTION.length - 1) + 1))]);
+            }, 500);
+        }
         init_html_map();
         init_events();
+        animate_ghosts();
     }
 
     onPositionChange(newPosition, oldPosition) {

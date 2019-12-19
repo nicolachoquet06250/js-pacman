@@ -1,5 +1,7 @@
 * {
     font-family: 'Press Start 2P', cursive;
+    margin: unset;
+    padding: unset;
 }
 
 .game-board {

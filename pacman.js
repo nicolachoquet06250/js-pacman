@@ -24,6 +24,7 @@ class Pacman extends Character {
     }
 
     draw() {
+        document.querySelector('#board').innerHTML = '';
         let ghostSetIntervals = {
             red: null,
             blue: null,
@@ -78,10 +79,11 @@ class Pacman extends Character {
             },
 
             onPacmanCollision(pacman, ghost) {
-                unanimate_ghosts();
                 let pacman_o = document.querySelector(`.pacman[data-position_x="${pacman['data-position_x']}"][data-position_y="${pacman['data-position_y']}"]`);
-                console.log('onPacmanCollision', pacman, ghost);
                 setTimeout(function () {
+                    remove_events();
+                    unanimate_pacman();
+                    unanimate_ghosts();
                     pacman_o.classList.remove('pacman');
                 }, 0);
                 setTimeout(function () {
@@ -110,14 +112,18 @@ class Pacman extends Character {
                 }
                 if(this.score > 0) {
                     setTimeout(function () {
+                        animate_pacman();
                         animate_ghosts();
+                        init_events();
                     }, 2000);
                 }
             },
             onGhostCollision(pacman, ghost) {
-                clearInterval(ghostSetIntervals[ghost["data-color"]]);
                 let ghost_o = document.querySelector(`.ghost[data-position_x="${ghost['data-position_x']}"][data-position_y="${ghost['data-position_y']}"]`);
                 setTimeout(function () {
+                    remove_events();
+                    unanimate_pacman();
+                    unanimate_ghosts();
                     ghost_o.classList.add('dead');
                 }, 0);
                 setTimeout(function () {
@@ -136,7 +142,10 @@ class Pacman extends Character {
                     ghost_o.classList.remove('ghost');
                     ghost_o.removeAttribute('data-color');
                     ghost_o.classList.remove('dead');
-                }, 2000);
+                    init_events();
+                    animate_pacman();
+                    animate_ghosts();
+                }, 2500);
             },
 
             onKeyDown(e) {
@@ -212,13 +221,16 @@ class Pacman extends Character {
         };
 
         function win() {
+            unanimate_pacman();
             unanimate_ghosts();
             remove_events();
-            console.log("YOU ARE THE WINNER !!");
+            alert("YOU ARE THE WINNER !!");
         }
         function loose() {
+            unanimate_pacman();
+            unanimate_ghosts();
             remove_events();
-            console.log('GAME OVER');
+            alert('GAME OVER');
         }
         function get_position(element) {
             return {

@@ -46,7 +46,8 @@ class Game {
     initPlayButtonEvent() {
         for(let play_button of document.querySelectorAll('.play-button')) {
             play_button.addEventListener('click', () => {
-                this.play();
+                this.account.draw();
+                // this.play();
             });
         }
     }
